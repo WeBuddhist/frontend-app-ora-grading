@@ -7,6 +7,7 @@ import { FooterSlot } from '@edx/frontend-component-footer';
 import { LearningHeader as Header } from '@edx/frontend-component-header';
 
 import { selectors } from 'data/redux';
+import { RequestKeys } from 'data/constants/requests';
 
 import DemoWarning from 'containers/DemoWarning';
 import ListView from 'containers/ListView';
@@ -16,7 +17,7 @@ import './App.scss';
 import Head from './components/Head';
 import { mathJaxConfig } from './utils';
 
-export const App = ({ courseMetadata, isEnabled }) => (
+export const App = ({ courseMetadata, isEnabled, isInitialized }) => (
   <Router>
     <div>
       <Head />
@@ -26,7 +27,7 @@ export const App = ({ courseMetadata, isEnabled }) => (
         courseOrg={courseMetadata.org}
         data-testid="header"
       />
-      {!isEnabled && <DemoWarning />}
+      {isInitialized && !isEnabled && <DemoWarning />}
       <main data-testid="main">
         <MathJaxContext config={mathJaxConfig}>
           <ListView />
@@ -50,11 +51,15 @@ App.propTypes = {
     org: PropTypes.string,
   }),
   isEnabled: PropTypes.bool.isRequired,
+  isInitialized: PropTypes.bool.isRequired,
 };
 
 export const mapStateToProps = (state) => ({
   courseMetadata: selectors.app.courseMetadata(state),
   isEnabled: selectors.app.isEnabled(state),
+  isInitialized: selectors.requests.isCompleted(state, {
+    requestKey: RequestKeys.initialize,
+  }),
 });
 
 export default connect(mapStateToProps)(App);

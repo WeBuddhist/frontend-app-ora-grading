@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { selectors } from 'data/redux';
+import { RequestKeys } from 'data/constants/requests';
 
 import { renderWithIntl } from './testUtils';
 import { App, mapStateToProps } from './App';
@@ -41,6 +42,9 @@ jest.mock('data/redux', () => ({
       }),
       isEnabled: jest.fn((state) => (state.isEnabled !== undefined ? state.isEnabled : true)),
     },
+    requests: {
+      isCompleted: jest.fn(() => true),
+    },
   },
 }));
 
@@ -52,6 +56,7 @@ describe('App component', () => {
       title: 'Test Course',
     },
     isEnabled: true,
+    isInitialized: true,
   };
 
   beforeEach(() => {
@@ -87,6 +92,12 @@ describe('App component', () => {
     expect(demoWarning).toBeInTheDocument();
   });
 
+  it('does not render demo warning before initialize completes', () => {
+    renderWithIntl(<App {...defaultProps} isEnabled={false} isInitialized={false} />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   describe('mapStateToProps', () => {
     it('maps state properties correctly', () => {
       const testState = { arbitraryState: 'some data' };
@@ -94,8 +105,12 @@ describe('App component', () => {
 
       expect(selectors.app.courseMetadata).toHaveBeenCalledWith(testState);
       expect(selectors.app.isEnabled).toHaveBeenCalledWith(testState);
+      expect(selectors.requests.isCompleted).toHaveBeenCalledWith(testState, {
+        requestKey: RequestKeys.initialize,
+      });
       expect(mapped.courseMetadata).toEqual(selectors.app.courseMetadata(testState));
       expect(mapped.isEnabled).toEqual(selectors.app.isEnabled(testState));
+      expect(mapped.isInitialized).toEqual(true);
     });
   });
 });
